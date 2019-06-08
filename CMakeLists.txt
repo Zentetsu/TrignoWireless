@@ -34,13 +34,6 @@ add_executable(${PROJECT_NAME} MACOSX_BUNDLE WIN32
 	window/mainwindow.ui
 )
 
-target_link_libraries(${PROJECT_NAME}
-	PRIVATE
-	Qt5::Widgets
-	LSL::lsl
-	Boost::thread
-)
-
 if(APPLE)
 	target_link_libraries(${PROJECT_NAME}
 		PRIVATE
