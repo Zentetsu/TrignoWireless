@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>339</width>
+            <height>230</height>
+        </rect>
+    </property>
+    <property name="windowTitle">
+        <string>EMG Device</string>
+    </property>
+    <widget class="QWidget" name="centralWidget">
+        <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+                <widget class="QGroupBox" name="groupBox">
+                    <property name="title">
+                        <string>Experiment Information</string>
+                    </property>
+                    <layout class="QGridLayout" name="gridLayout">
+                        <item row="0" column="0">
+                            <widget class="QLabel" name="label">
+                                <property name="text">
+                                    <string>IP Address</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="0" column="1">
+                            <widget class="QLineEdit" name="ip_address">
+                                <property name="text">
+                                    <string>10.20.124.2</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="2" column="0">
+                            <widget class="QLabel" name="label_3">
+                                <property name="text">
+                                    <string>Cap Design</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="2" column="1">
+                            <widget class="QComboBox" name="EMG_design">
+                                <property name="editable">
+                                    <bool>true</bool>
+                                </property>
+                                <item>
+                                    <property name="text">
+                                        <string>Trigno Wireless</string>
+                                    </property>
+                                </item>
+                            </widget>
+                        </item>
+                        <item row="5" column="0">
+                            <widget class="QLabel" name="label_5">
+                                <property name="text">
+                                    <string>Resample to 512 Hz</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="5" column="1">
+                            <widget class="QCheckBox" name="resampling_on">
+                            </widget>
+                        </item>
+                    </layout>
+                </widget>
+            </item>
+            <item>
+                <spacer name="verticalSpacer">
+                    <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                        <size>
+                            <width>20</width>
+                            <height>10</height>
+                        </size>
+                    </property>
+                </spacer>
+            </item>
+            <item>
+                <layout class="QHBoxLayout" name="horizontalLayout1">
+                    <item>
+                        <spacer name="horizontalSpacer">
+                            <property name="orientation">
+                                <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                                <size>
+                                    <width>40</width>
+                                    <height>20</height>
+                                </size>
+                            </property>
+                        </spacer>
+                    </item>
+                    <item>
+                        <widget class="QPushButton" name="connect_EMG">
+                            <property name="text">
+                                <string>&amp;Connect</string>
+                            </property>
+                        </widget>
+                    </item>
+                </layout>
+            </item>
+            <item>
+                <layout class="QHBoxLayout" name="horizontalLayout2">
+                    <item>
+                        <spacer name="horizontalSpacer">
+                            <property name="orientation">
+                                <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                                <size>
+                                    <width>40</width>
+                                    <height>20</height>
+                                </size>
+                            </property>
+                        </spacer>
+                    </item>
+                    <item>
+                        <widget class="QPushButton" name="connect_labrecorder">
+                            <property name="text">
+                                <string>&amp;Link</string>
+                            </property>
+                        </widget>
+                    </item>
+                </layout>
+            </item>
+        </layout>
+        <zorder>verticalSpacer</zorder>
+        <zorder>groupBox</zorder>
+    </widget>
+    <widget class="QMenuBar" name="menuBar">
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>339</width>
+            <height>21</height>
+        </rect>
+    </property>
+    <widget class="QMenu" name="menuFilw">
+        <property name="title">
+            <string>File</string>
+        </property>
+        <addaction name="action_load_configuration"/>
+        <addaction name="action_save_configuration"/>
+        <addaction name="separator"/>
+        <addaction name="action_quit"/>
+    </widget>
+        <addaction name="menuFilw"/>
+    </widget>
+    <widget class="QStatusBar" name="statusBar"/>
+        <action name="action_load_configuration">
+            <property name="text">
+                <string>&amp;Load Configuration...</string>
+            </property>
+        </action>
+        <action name="action_save_configuration">
+            <property name="text">
+                <string>&amp;Save Configuration...</string>
+            </property>
+        </action>
+        <action name="action_quit">
+            <property name="text">
+                <string>Quit</string>
+            </property>
+        </action>
+    </widget>
+    <layoutdefault spacing="6" margin="11"/>
+    <resources/>
+    <connections/>
+</ui>
