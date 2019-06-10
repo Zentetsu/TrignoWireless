@@ -1,0 +1,1 @@
+enum Signal {_EMG, _ACC, _IMEMG, _AUX, _NONE};

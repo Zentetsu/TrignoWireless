@@ -30,8 +30,9 @@
 #include "../window/ui_mainwindow.h"
 #include "../include/recording.hpp"
 
+
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class MainWindow : public QMainWindow {
@@ -49,8 +50,7 @@ class MainWindow : public QMainWindow {
         void saveConfigDialog();
 
         void loadChanlocsDialog();
-
-        void lslSharing();
+        
         void acquisitionEMG();
 
         void closeEvent(QCloseEvent *ev) override;

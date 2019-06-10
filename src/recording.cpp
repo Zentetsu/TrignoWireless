@@ -1,7 +1,7 @@
 #include "../include/recording.hpp"
 
 
-Recording::Recording(std::string ip, int com_port) {
+Recording::Recording(std::string ip, std::string new_list_channels, std::string new_list_EMG, int com_port) {
     setbuf(stdout, NULL);
 
     error = false;
@@ -87,6 +87,8 @@ Recording::Recording(std::string ip, int com_port) {
         //TODO write exception
         error = true;
     }
+
+    settingConfig(new_list_channels, new_list_EMG);
 }
 
 Recording::~Recording() {
@@ -137,14 +139,7 @@ void Recording::startRecording() {
     std::cout << "Start recording..." << std::endl;
     basicExchange((char *)"START\r\n\r\n");
 
-    sendRequest(comm_sock, (char*)"SENSOR 1 TYPE?\r\n\r\n");
-
-    char* reply = getReply(comm_sock);
-    sensor_type[0] = *reply;
-
-    std::cout<< reply << std::endl;
-
-    free(reply);
+    getSensorType();
 
     getData();
 }
@@ -152,30 +147,142 @@ void Recording::startRecording() {
 void Recording::basicExchange(char* request) {
     sendRequest(comm_sock, request);
     //std::string reply = getReply(comm_sock);
-    std::cout<< getReply(comm_sock) << std::endl;
+    std::cout << getReply(comm_sock) << std::endl;
+}
+
+void Recording::getSensorType() {
+    char* reply;
+
+    for(int i = 0; i < list_EMG.size(); i++) {
+        sprintf(temp_request, "SENSOR %d TYPE?\r\n\r\n", i+1);
+        sendRequest(comm_sock, temp_request);
+        reply = getReply(comm_sock);
+        sensor_type[i] = *reply;
+        
+        std::cout << reply << std::endl;
+
+        free(reply);
+    }
 }
 
 void Recording::getData() {
     std::cout << "Data..." << std::endl;
-    float sample[64];
+    concatened_chanels.resize(nb_channels);
+    int space = 0;
+
+    unsigned int samples_EMG = SZ_DATA_EMG / sizeof(float) / 16;
+    float EMG_data_flt[SZ_DATA_EMG / sizeof(float)];
+    unsigned int samples_ACC = SZ_DATA_ACC / sizeof(float) / 48;
+    float acc_data_flt[SZ_DATA_ACC / sizeof(float)];
+    unsigned int samples_IMEMG = SZ_DATA_IM_EMG / sizeof(float) / 16;
+    float imemg_data_flt[SZ_DATA_IM_EMG / sizeof(float)];
+    unsigned int samples_AUX = SZ_DATA_IM_AUX / sizeof(float) / 144;
+    float aux_data_flt[SZ_DATA_IM_AUX / sizeof(float)];
+
+    std::cout << samples_EMG << "   " << samples_ACC << "   " << samples_IMEMG << "   " << samples_AUX << std::endl;
 
     while(record) {
-        if(lsl_sharing) {
-            std::cout << "sharing..." << std::endl;
-            
-            for (int c=0;c<64;c++)
-                sample[c] = (rand()%1500)/500.0-1.5;
+        concatened_chanels.resize(nb_channels);
 
-            outlet->push_sample(sample);
-        } else {
-            std::cout << "get..." << std::endl;
+        if(sig_EMG) {
+            for(int k = 0; k < nb_channels; k++)
+                concatened_chanels[k].resize(samples_EMG);
+
+            if (recv(EMG_sock, EMG_data, SZ_DATA_EMG, MSG_PEEK) >= SZ_DATA_EMG) {
+                recv(EMG_sock, EMG_data, SZ_DATA_EMG, 0);
+                memcpy(EMG_data_flt, EMG_data, SZ_DATA_EMG);
+
+                for (int i = 0; i < samples_EMG; i++) {
+                    for (int j = 0; j < list_EMG.size(); j++) {
+                        std::cout << "EMG" << ": " << EMG_data_flt[i * 16 + j] << std::endl;
+                        concatened_chanels[j][i] = EMG_data_flt[i * 16 + j];
+                    }
+                }
+            }
+
+            space = list_EMG.size();
         }
 
-        #ifdef _WIN32
-            Sleep(100);
-        #else
-            usleep(10000);
-        #endif
+        if(sig_acc) {
+            for(int k = space; k < nb_channels; k++)
+                concatened_chanels[k].resize(samples_ACC);
+
+            if (recv(acc_sock, acc_data, SZ_DATA_ACC, MSG_PEEK) >= SZ_DATA_ACC) {
+                recv(acc_sock, acc_data, SZ_DATA_ACC, 0);
+                memcpy(acc_data_flt, acc_data, SZ_DATA_ACC);
+
+                for (int i = 0; i < samples_ACC; i++) {
+                    std::cout << "ACC: ";
+
+                    for (int j = 0; j < 3 * list_EMG.size(); j++) {
+                        std::cout << acc_data_flt[i * 48 + j] << "    ";
+                        concatened_chanels[j + space][i] = acc_data_flt[i * 48 + j];
+                    }
+                    
+                    std::cout << std::endl;
+                }
+            }
+
+            space += 3 * list_EMG.size();
+        }
+
+        if(sig_imemg) {
+            for(int k = space; k < nb_channels; k++)
+                concatened_chanels[k].resize(samples_IMEMG);
+
+              if (recv(imemg_sock, imemg_data, SZ_DATA_IM_EMG, MSG_PEEK) >= SZ_DATA_IM_EMG) {
+                recv(imemg_sock, imemg_data, SZ_DATA_IM_EMG, 0);
+                memcpy(imemg_data_flt, imemg_data, SZ_DATA_IM_EMG);
+
+                for (int i = 0; i < samples_IMEMG; i++) {
+                    std::cout << "IM_EMG: ";
+
+                    for (int j = 0; j < list_EMG.size(); j++) {
+                        std::cout <<  imemg_data_flt[i * 16 + j] << "    ";
+                        concatened_chanels[j + space][i] = imemg_data_flt[i * 48 + j];
+                    }
+                    
+                    std::cout << std::endl;
+                }
+            }
+
+            space += list_EMG.size();
+        }
+        
+        if(sig_aux) {
+            for(int k = space; k < nb_channels; k++)
+                concatened_chanels[k].resize(samples_AUX);
+
+            if (recv(aux_sock, aux_data, SZ_DATA_IM_AUX, MSG_PEEK) >= SZ_DATA_IM_AUX) {
+                recv(aux_sock, aux_data, SZ_DATA_IM_AUX, 0);
+                memcpy(aux_data_flt, aux_data, SZ_DATA_IM_AUX);
+
+                for (int i = 0; i < samples_AUX; i++) {
+                    std::cout << "AUX: ";
+
+                    for (int j = 0; j < 9 * list_EMG.size(); j++) {
+                        std::cout <<  aux_data_flt[i * 144 + j] << "    ";
+                        concatened_chanels[j + space][i] = aux_data_flt[i * 48 + j];
+                    }
+                    
+                    std::cout << std::endl;
+                }
+            }
+        }
+
+        if (lsl_sharing) {
+            std::cout << "sharing: " << std::endl;
+
+            outlet->push_chunk(concatened_chanels);
+        }
+
+        // #ifdef _WIN32
+        //     Sleep(100);
+        // #else
+        //     usleep(500000);
+        // #endif
+
+        space = 0;
     }
 }
 
@@ -216,32 +323,70 @@ char* Recording::getReply(int socket) {
 
         return tmp;
     }
+
     char *tmp = (char *)malloc(1);
     tmp[0] = '\0';
-    return tmp;
-}
-
-char * Recording::readReplyIfReady(int socket, int bytesExpected) {
-    u_long bytesAvail = 0;
-    #ifdef _WIN32
-    if (ioctlsocket(socket, FIONREAD, &bytesAvail) >= 0 && bytesAvail < bytesExpected)
-        return NULL;
-    #else
-    if (ioctl(socket, FIONREAD, &bytesAvail) >= 0 && bytesAvail < bytesExpected)
-        return NULL;
-    #endif
-
-
-    char *tmp = (char*)(bytesAvail);
-    recv(socket, tmp, bytesAvail, 0);
-    tmp[bytesAvail] = '\0';
 
     return tmp;
 }
 
-void Recording::setupLSL(lsl::stream_info *s_info) {
-    info = s_info;
-    outlet = new lsl::stream_outlet(*info);
+void Recording::settingConfig(std::string new_list_channels, std::string new_list_EMG) {
+    boost::algorithm::split(list_channels, new_list_channels, boost::algorithm::is_any_of(", "), boost::algorithm::token_compress_on);
+    boost::algorithm::split(list_EMG, new_list_EMG, boost::algorithm::is_any_of(", "), boost::algorithm::token_compress_on);
 
-    lsl_sharing = true;
+    sig_EMG = false;
+    sig_acc = false;
+    sig_imemg = false;
+    sig_aux = false;
+    nb_channels = 0;
+
+    for (auto it : list_channels) {
+        switch(resolveSignal(it)) {
+            case _EMG:
+                nb_channels += 1 * list_EMG.size();
+                sig_EMG = true;
+                
+                break;
+            case _ACC:
+                nb_channels += 3 * list_EMG.size();
+                sig_acc = true;
+                
+                break;
+            case _IMEMG:
+                nb_channels += 1 * list_EMG.size();
+                sig_imemg = true;
+
+                break;
+            case _AUX:
+                nb_channels += 9 * list_EMG.size();
+                sig_aux = true;
+
+                break;
+            case _NONE:
+                std::cout << "ERROR" << std::endl;
+                
+                break;
+        }
+    }
+
+    lsl::stream_info info("Trigno Wireless", "EMG", nb_channels, 2000, lsl::cf_float32, boost::asio::ip::host_name());
+    lsl::xml_element l_channels = info.desc().append_child("list_channels");
+    lsl::xml_element l_EMG = info.desc().append_child("list_EMG");
+
+    for(int i = 0; i < list_channels.size(); i++)
+        l_channels.append_child_value("channels", list_channels[i].c_str());
+        
+    for(int i = 0; i < list_EMG.size(); i++)
+        l_EMG.append_child_value("EMG", list_EMG[i].c_str());
+
+    outlet = new lsl::stream_outlet(info);
+}
+
+Signal Recording::resolveSignal(std::string input) {
+    if(input == "EMG") return _EMG;
+    if(input == "ACC") return _ACC;
+    if(input == "IMEMG") return _IMEMG;
+    if(input == "AUX") return _AUX;
+    
+    return _NONE;
 }

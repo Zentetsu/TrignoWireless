@@ -45,16 +45,18 @@ void MainWindow::connectLabrecorder() {
         }
 
         ui->connect_labrecorder->setText("Link");
-    } else {
+    } else if(!stop_EMG) {
         stop_labrecorder = false;
-        lslSharing();
+        record->setLSLSharing(true);
 
         ui->connect_labrecorder->setText("Unlink");
+    } else {
+      QMessageBox::information(this, "Warning", "You need to start the EMG connection before.", QMessageBox::Ok);
     }
 }
 
 void MainWindow::connectEMG() { 
-    if (!stop_EMG) {
+    if (!stop_EMG && stop_labrecorder) {
         try {
             record->setRecord(false);
             stop_EMG = true;
@@ -70,9 +72,9 @@ void MainWindow::connectEMG() {
         }
 
         ui->connect_EMG->setText("Connect");
-    } else {
+    } else if(stop_EMG) {
         try {
-            record = new Recording(ui->ip_address->text().toStdString(), 50040);
+            record = new Recording(ui->ip_address->text().toStdString(), ui->reference_channels->text().toStdString(), ui->reference_EMG->text().toStdString(), 50040);
         } catch(std::exception &e) {
             QMessageBox::critical(this,"Error", "Unable to start connection with the EMG", QMessageBox::Ok);
         
@@ -83,6 +85,8 @@ void MainWindow::connectEMG() {
 
         EMG_thread.reset(new boost::thread(&MainWindow::acquisitionEMG, this));
         ui->connect_EMG->setText("Disconnect");
+    } else {
+        QMessageBox::information(this, "Warning", "You need to unlik before.", QMessageBox::Ok);
     }
 }
 
@@ -99,19 +103,6 @@ void MainWindow::loadConfig(const std::string filename) {
 void MainWindow::saveConfig(const std::string filename) {
     QMessageBox::information(this, "Warning", "Not yet implemented", QMessageBox::Ok);
     //TODO saveConfig
-}
-
-void MainWindow::lslSharing() {
-    lsl::stream_info info("Trigno Wireless", "EMG", 64, 2000, lsl::cf_float32, "localhost");
-    lsl::stream_outlet outlet(info);
-
-    record->setupLSL(&info);
-    //TODO correctly the information to the stream_info
-    /* record->set_lsl_sharing(true); */
-    /* 	lsl::stream_info info("Trigno Wireless", "EMG", 64, 2000, lsl::cf_float32, boost::asio::ip::host_name());
-    info.desc().append_child("EMG").append_child_value("number", "1");
-
-    lsl::stream_outlet outlet(info); */
 }
 
 void MainWindow::acquisitionEMG() {
