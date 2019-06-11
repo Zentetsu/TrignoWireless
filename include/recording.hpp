@@ -27,7 +27,9 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+
 
 #include "../include/signal_type.hpp"
 
@@ -49,6 +51,7 @@ class Recording {
         bool getError();
         void setRecord(bool value);
         void setLSLSharing(bool value);
+        void setupLSLSharing(bool value);
 
         void checkConnection();
         void startRecording();
@@ -64,10 +67,16 @@ class Recording {
 
         Signal resolveSignal(std::string input);
 
-        lsl::stream_info *info;
-        lsl::stream_outlet *outlet;
+        lsl::stream_info *info_EMG;
+        lsl::stream_info *info_ACC;
+        lsl::stream_info *info_IMEMG;
+        lsl::stream_info *info_AUX;
+        lsl::stream_outlet *outlet_EMG;
+        lsl::stream_outlet *outlet_ACC;
+        lsl::stream_outlet *outlet_IMEMG;
+        lsl::stream_outlet *outlet_AUX;
 
-    private:
+      private:
         bool error;
         bool record;
         bool lsl_sharing;
@@ -75,9 +84,12 @@ class Recording {
         std::vector<std::string> list_channels;
         std::vector<std::string> list_EMG;
 
-        std::vector<std::vector<float>> concatened_chanels;
+        std::vector<std::vector<float>> chanels_EMG;
+        std::vector<std::vector<float>> chanels_acc;
+        std::vector<std::vector<float>> chanels_imemg;
+        std::vector<std::vector<float>> chanels_aux;
 
-        int nb_channels;
+        int nb_channels_EMG, nb_channels_acc, nb_channels_imemg, nb_channels_aux;
 
         std::string ip_address;
         struct sockaddr_in server_address;

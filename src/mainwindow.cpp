@@ -37,6 +37,7 @@ void MainWindow::connectLabrecorder() {
     if (!stop_labrecorder) {
         try {
             record->setLSLSharing(false);
+            record->setupLSLSharing(false);
             stop_labrecorder = true;
         } catch(std::exception &e) {
             QMessageBox::critical(this,"Error",(std::string("Could not stop the background processing: ")+=e.what()).c_str(),QMessageBox::Ok);
@@ -47,6 +48,7 @@ void MainWindow::connectLabrecorder() {
         ui->connect_labrecorder->setText("Link");
     } else if(!stop_EMG) {
         stop_labrecorder = false;
+        record->setupLSLSharing(true);
         record->setLSLSharing(true);
 
         ui->connect_labrecorder->setText("Unlink");
