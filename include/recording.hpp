@@ -85,22 +85,22 @@ class Recording {
         std::vector<std::string> list_EMG;
 
         std::vector<std::vector<float>> chanels_EMG;
-        std::vector<std::vector<float>> chanels_acc;
-        std::vector<std::vector<float>> chanels_imemg;
-        std::vector<std::vector<float>> chanels_aux;
+        std::vector<std::vector<float>> chanels_ACC;
+        std::vector<std::vector<float>> chanels_IMEMG;
+        std::vector<std::vector<float>> chanels_AUX;
 
-        int nb_channels_EMG, nb_channels_acc, nb_channels_imemg, nb_channels_aux;
+        int nb_channels_EMG, nb_channels_ACC, nb_channels_IMEMG, nb_channels_AUX;
 
         std::string ip_address;
         struct sockaddr_in server_address;
 
-        int comm_sock, EMG_sock, acc_sock, imemg_sock, aux_sock;
-        bool sig_EMG, sig_acc, sig_imemg, sig_aux;
+        int COMM_sock, EMG_sock, ACC_sock, IMEMG_sock, AUX_sock;
+        bool sig_EMG, sig_ACC, sig_IMEMG, sig_AUX;
 
         char EMG_data[SZ_DATA_EMG];
-        char acc_data[SZ_DATA_ACC];
-        char imemg_data[SZ_DATA_IM_EMG];
-        char aux_data[SZ_DATA_IM_AUX];
+        char ACC_data[SZ_DATA_ACC];
+        char IMEMG_data[SZ_DATA_IM_EMG];
+        char AUX_data[SZ_DATA_IM_AUX];
         char sensor_type[16];
 
         char* reply;

@@ -13,7 +13,7 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
         exit(1);
     #endif
 
-    if((comm_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    if((COMM_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -26,7 +26,7 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
     server_address.sin_addr.s_addr = inet_addr(ip_address.c_str());
     server_address.sin_port = htons(com_port);
 
-    if(connect(comm_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
+    if(connect(COMM_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -46,7 +46,7 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
         error = true;
     }
 
-    if ((acc_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    if ((ACC_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -54,13 +54,13 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
 
     server_address.sin_port = htons(50042);
 
-    if (connect(acc_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
+    if (connect(ACC_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
         throw std::exception();
         //TODO write exception
         error = true;
     }
 
-    if ((imemg_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    if ((IMEMG_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -68,13 +68,13 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
 
     server_address.sin_port = htons(50043);
 
-    if (connect(imemg_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
+    if (connect(IMEMG_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
         throw std::exception();
         //TODO write exception
         error = true;
     }
 
-    if ((aux_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    if ((AUX_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -82,7 +82,7 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
 
     server_address.sin_port = htons(50044);
 
-    if (connect(aux_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
+    if (connect(AUX_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
         throw std::exception();
         //TODO write exception
         error = true;
@@ -98,18 +98,18 @@ Recording::~Recording() {
 
 void Recording::closeSocket() {
     #ifdef _WIN32
-        closesocket(comm_sock);
+        closesocket(COMM_sock);
         closesocket(EMG_sock);
-        closesocket(aux_sock);
-        closesocket(imemg_sock);
-        closesocket(aux_sock);
+        closesocket(ACC_sock);
+        closesocket(IMEMG_sock);
+        closesocket(AUX_sock);
         WSACleanup();
     #else
-        close(comm_sock);
+        close(COMM_sock);
         close(EMG_sock);
-        close(aux_sock);
-        close(imemg_sock);
-        close(aux_sock);
+        close(ACC_sock);
+        close(IMEMG_sock);
+        close(AUX_sock);
     #endif
 }
 
@@ -128,14 +128,14 @@ void Recording::setLSLSharing(bool value) {
 void Recording::setupLSLSharing(bool value) {
     if(value) {
         if(sig_EMG) outlet_EMG = new lsl::stream_outlet(*info_EMG);
-        if(sig_acc) outlet_ACC = new lsl::stream_outlet(*info_ACC);
-        if(sig_imemg) outlet_IMEMG = new lsl::stream_outlet(*info_IMEMG);
-        if(sig_aux) outlet_AUX = new lsl::stream_outlet(*info_AUX);
+        if(sig_ACC) outlet_ACC = new lsl::stream_outlet(*info_ACC);
+        if(sig_IMEMG) outlet_IMEMG = new lsl::stream_outlet(*info_IMEMG);
+        if(sig_AUX) outlet_AUX = new lsl::stream_outlet(*info_AUX);
     } else {
         if(sig_EMG) delete outlet_EMG;
-        if(sig_acc) delete outlet_ACC;
-        if(sig_imemg) delete info_IMEMG;
-        if(sig_aux) delete info_AUX;
+        if(sig_ACC) delete outlet_ACC;
+        if(sig_IMEMG) delete outlet_IMEMG;
+        if(sig_AUX) delete outlet_AUX;
     }
 }
 
@@ -159,9 +159,9 @@ void Recording::startRecording() {
 }
 
 void Recording::basicExchange(char* request) {
-    sendRequest(comm_sock, request);
-    //std::string reply = getReply(comm_sock);
-    std::cout << getReply(comm_sock) << std::endl;
+    sendRequest(COMM_sock, request);
+    //std::string reply = getReply(COMM_sock);
+    std::cout << getReply(COMM_sock) << std::endl;
 }
 
 void Recording::getSensorType() {
@@ -169,8 +169,8 @@ void Recording::getSensorType() {
 
     for(int i = 0; i < list_EMG.size(); i++) {
         sprintf(temp_request, "SENSOR %d TYPE?\r\n\r\n", i+1);
-        sendRequest(comm_sock, temp_request);
-        reply = getReply(comm_sock);
+        sendRequest(COMM_sock, temp_request);
+        reply = getReply(COMM_sock);
         sensor_type[i] = *reply;
         
         std::cout << reply << std::endl;
@@ -185,11 +185,11 @@ void Recording::getData() {
     unsigned int samples_EMG = SZ_DATA_EMG / sizeof(float) / 16;
     float EMG_data_flt[SZ_DATA_EMG / sizeof(float)];
     unsigned int samples_ACC = SZ_DATA_ACC / sizeof(float) / 48;
-    float acc_data_flt[SZ_DATA_ACC / sizeof(float)];
+    float ACC_data_flt[SZ_DATA_ACC / sizeof(float)];
     unsigned int samples_IMEMG = SZ_DATA_IM_EMG / sizeof(float) / 16;
-    float imemg_data_flt[SZ_DATA_IM_EMG / sizeof(float)];
+    float IMEMG_data_flt[SZ_DATA_IM_EMG / sizeof(float)];
     unsigned int samples_AUX = SZ_DATA_IM_AUX / sizeof(float) / 144;
-    float aux_data_flt[SZ_DATA_IM_AUX / sizeof(float)];
+    float AUX_data_flt[SZ_DATA_IM_AUX / sizeof(float)];
 
     std::cout << samples_EMG << "   " << samples_ACC << "   " << samples_IMEMG << "   " << samples_AUX << std::endl;
 
@@ -216,22 +216,22 @@ void Recording::getData() {
                 outlet_EMG->push_chunk(chanels_EMG);
         }
 
-        if(sig_acc) {
-            chanels_acc.resize(samples_ACC);
+        if(sig_ACC) {
+            chanels_ACC.resize(samples_ACC);
 
             for(int k = 0; k < samples_ACC; k++)
-                chanels_acc[k].resize(nb_channels_acc);
+                chanels_ACC[k].resize(nb_channels_ACC);
 
-            if (recv(acc_sock, acc_data, SZ_DATA_ACC, MSG_PEEK) >= SZ_DATA_ACC) {
-                recv(acc_sock, acc_data, SZ_DATA_ACC, 0);
-                memcpy(acc_data_flt, acc_data, SZ_DATA_ACC);
+            if (recv(ACC_sock, ACC_data, SZ_DATA_ACC, MSG_PEEK) >= SZ_DATA_ACC) {
+                recv(ACC_sock, ACC_data, SZ_DATA_ACC, 0);
+                memcpy(ACC_data_flt, ACC_data, SZ_DATA_ACC);
 
                 for (int i = 0; i < samples_ACC; i++) {
                     std::cout << "ACC: ";
 
                     for (int j = 0; j < 3 * list_EMG.size(); j++) {
-                        std::cout << acc_data_flt[i * 48 + j] << "    ";
-                        chanels_acc[i][j] = acc_data_flt[i * 48 + j];
+                        std::cout << ACC_data_flt[i * 48 + j] << "    ";
+                        chanels_ACC[i][j] = ACC_data_flt[i * 48 + j];
                     }
                     
                     std::cout << std::endl;
@@ -239,25 +239,25 @@ void Recording::getData() {
             }
 
             if (lsl_sharing)
-                outlet_ACC->push_chunk(chanels_acc);
+                outlet_ACC->push_chunk(chanels_ACC);
         }
 
-        if(sig_imemg) {
-            chanels_imemg.resize(samples_IMEMG);
+        if(sig_IMEMG) {
+            chanels_IMEMG.resize(samples_IMEMG);
 
             for(int k = 0; k < samples_IMEMG; k++)
-                chanels_imemg[k].resize(nb_channels_imemg);
+                chanels_IMEMG[k].resize(nb_channels_IMEMG);
 
-              if (recv(imemg_sock, imemg_data, SZ_DATA_IM_EMG, MSG_PEEK) >= SZ_DATA_IM_EMG) {
-                recv(imemg_sock, imemg_data, SZ_DATA_IM_EMG, 0);
-                memcpy(imemg_data_flt, imemg_data, SZ_DATA_IM_EMG);
+              if (recv(IMEMG_sock, IMEMG_data, SZ_DATA_IM_EMG, MSG_PEEK) >= SZ_DATA_IM_EMG) {
+                recv(IMEMG_sock, IMEMG_data, SZ_DATA_IM_EMG, 0);
+                memcpy(IMEMG_data_flt, IMEMG_data, SZ_DATA_IM_EMG);
 
                 for (int i = 0; i < samples_IMEMG; i++) {
                     std::cout << "IM_EMG: ";
 
                     for (int j = 0; j < list_EMG.size(); j++) {
-                        std::cout <<  imemg_data_flt[i * 16 + j] << "    ";
-                        chanels_imemg[i][j] = imemg_data_flt[i * 48 + j];
+                        std::cout <<  IMEMG_data_flt[i * 16 + j] << "    ";
+                        chanels_IMEMG[i][j] = IMEMG_data_flt[i * 16 + j];
                     }
                     
                     std::cout << std::endl;
@@ -265,25 +265,25 @@ void Recording::getData() {
             }
 
             if (lsl_sharing)
-                outlet_IMEMG->push_chunk(chanels_imemg);
+                outlet_IMEMG->push_chunk(chanels_IMEMG);
         }
         
-        if(sig_aux) {
-            chanels_aux.resize(samples_AUX);
+        if(sig_AUX) {
+            chanels_AUX.resize(samples_AUX);
 
             for(int k = 0; k < samples_AUX; k++)
-                chanels_aux[k].resize(nb_channels_aux);
+                chanels_AUX[k].resize(nb_channels_AUX);
 
-            if (recv(aux_sock, aux_data, SZ_DATA_IM_AUX, MSG_PEEK) >= SZ_DATA_IM_AUX) {
-                recv(aux_sock, aux_data, SZ_DATA_IM_AUX, 0);
-                memcpy(aux_data_flt, aux_data, SZ_DATA_IM_AUX);
+            if (recv(AUX_sock, AUX_data, SZ_DATA_IM_AUX, MSG_PEEK) >= SZ_DATA_IM_AUX) {
+                recv(AUX_sock, AUX_data, SZ_DATA_IM_AUX, 0);
+                memcpy(AUX_data_flt, AUX_data, SZ_DATA_IM_AUX);
 
                 for (int i = 0; i < samples_AUX; i++) {
                     std::cout << "AUX: ";
 
                     for (int j = 0; j < 9 * list_EMG.size(); j++) {
-                        std::cout <<  aux_data_flt[i * 144 + j] << "    ";
-                        chanels_aux[i][j] = aux_data_flt[i * 48 + j];
+                        std::cout <<  AUX_data_flt[i * 144 + j] << "    ";
+                        chanels_AUX[i][j] = AUX_data_flt[i * 144 + j];
                     }
                     
                     std::cout << std::endl;
@@ -291,7 +291,7 @@ void Recording::getData() {
             }
 
             if (lsl_sharing)
-                outlet_AUX->push_chunk(chanels_aux);
+                outlet_AUX->push_chunk(chanels_AUX);
         }
 
         // #ifdef _WIN32
@@ -334,7 +334,7 @@ char* Recording::getReply(int socket) {
 
     if (bytesAvail > 0) {
         char* tmp = (char*)malloc(bytesAvail);
-        recv(comm_sock, tmp, bytesAvail, 0);
+        recv(COMM_sock, tmp, bytesAvail, 0);
         tmp[bytesAvail] = '\0';
 
         return tmp;
@@ -351,9 +351,9 @@ void Recording::settingConfig(std::string new_list_channels, std::string new_lis
     boost::algorithm::split(list_EMG, new_list_EMG, boost::algorithm::is_any_of(", "), boost::algorithm::token_compress_on);
 
     sig_EMG = false;
-    sig_acc = false;
-    sig_imemg = false;
-    sig_aux = false;
+    sig_ACC = false;
+    sig_IMEMG = false;
+    sig_AUX = false;
 
     for (auto it : list_channels) {
         switch(resolveSignal(it)) {
@@ -363,18 +363,18 @@ void Recording::settingConfig(std::string new_list_channels, std::string new_lis
                 
                 break;
             case _ACC:
-                nb_channels_acc = 3 * list_EMG.size();
-                sig_acc = true;
+                nb_channels_ACC = 3 * list_EMG.size();
+                sig_ACC = true;
                 
                 break;
             case _IMEMG:
-                nb_channels_imemg = list_EMG.size();
-                sig_imemg = true;
+                nb_channels_IMEMG = list_EMG.size();
+                sig_IMEMG = true;
 
                 break;
             case _AUX:
-                nb_channels_aux = 9 * list_EMG.size();
-                sig_aux = true;
+                nb_channels_AUX = 9 * list_EMG.size();
+                sig_AUX = true;
 
                 break;
             case _NONE:
@@ -385,9 +385,9 @@ void Recording::settingConfig(std::string new_list_channels, std::string new_lis
     }
 
     info_EMG = new lsl::stream_info("Trigno Wireless EMG", "EMG",nb_channels_EMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
-    info_ACC = new lsl::stream_info("Trigno Wireless ACC", "ACC", nb_channels_acc, (int)256/2, lsl::cf_float32, boost::asio::ip::host_name());
-    info_IMEMG = new lsl::stream_info("Trigno Wireless IMEMG", "IMEMG", nb_channels_imemg, 2000, lsl::cf_float32, boost::asio::ip::host_name());
-    info_AUX = new lsl::stream_info("Trigno Wireless AUX", "AUX", nb_channels_aux, 2000, lsl::cf_float32, boost::asio::ip::host_name());
+    info_ACC = new lsl::stream_info("Trigno Wireless ACC", "ACC", nb_channels_ACC, (int)256/2, lsl::cf_float32, boost::asio::ip::host_name());
+    info_IMEMG = new lsl::stream_info("Trigno Wireless IMEMG", "IMEMG", nb_channels_IMEMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
+    info_AUX = new lsl::stream_info("Trigno Wireless AUX", "AUX", nb_channels_AUX, 2000, lsl::cf_float32, boost::asio::ip::host_name());
     
     // lsl::xml_element l_channels_EMG = info_EMG->desc().append_child("list_channels");
     // lsl::xml_element l_channels_ACC = info_ACC->desc().append_child("list_channels");
