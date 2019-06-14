@@ -9,9 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED On)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
-if(APPLE)
-	find_package(Boost REQUIRED COMPONENTS thread)
-else()
+if(WIN32)
 	SET(Boost_USE_STATIC_LIBS OFF)
 	SET(Boost_USE_MULTITHREAD ON)
 
@@ -23,6 +21,8 @@ else()
 	ENDIF(Boost_FOUND)
 
 	SET(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_REGEX_LIBRARY})
+else()
+	find_package(Boost REQUIRED COMPONENTS thread)
 endif()
 
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE WIN32
@@ -34,20 +34,20 @@ add_executable(${PROJECT_NAME} MACOSX_BUNDLE WIN32
 	window/mainwindow.ui
 )
 
-if(APPLE)
-	target_link_libraries(${PROJECT_NAME}
-		PRIVATE
-		Qt5::Widgets
-		LSL::lsl
-		Boost::thread
-	)
-else()
+if(WIN32)
 	target_link_libraries(${PROJECT_NAME}
 		PRIVATE
 		Qt5::Widgets
 		LSL::lsl
 		ws2_32
 		${USED_LIBS}
+	)
+else()
+	target_link_libraries(${PROJECT_NAME}
+		PRIVATE
+		Qt5::Widgets
+		LSL::lsl
+		Boost::thread
 	)
 endif()
 
