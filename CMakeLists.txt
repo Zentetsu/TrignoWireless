@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(EMG LANGUAGES CXX VERSION 1.0.0)
+project(TrignoWireless LANGUAGES CXX VERSION 1.0.0)
 
 include(Findliblsl.cmake)
 

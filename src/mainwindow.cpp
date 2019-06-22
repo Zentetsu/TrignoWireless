@@ -68,7 +68,7 @@ void MainWindow::connectEMG() {
             
             delete record;
         } catch(std::exception &e) {
-            QMessageBox::critical(this,"Error",(std::string("Could not stop the background processing: ")+=e.what()).c_str(),QMessageBox::Ok);
+            QMessageBox::critical(this,"Error", (std::string("Could not stop the background processing: ") += e.what()).c_str(),QMessageBox::Ok);
             
             return;
         }
@@ -78,8 +78,8 @@ void MainWindow::connectEMG() {
         try {
             record = new Recording(ui->ip_address->text().toStdString(), ui->reference_channels->text().toStdString(), ui->reference_EMG->text().toStdString(), 50040);
         } catch(std::exception &e) {
-            QMessageBox::critical(this,"Error", "Unable to start connection with the EMG", QMessageBox::Ok);
-        
+            QMessageBox::critical(this,"Error", (std::string("Unable to start connection with the EMG") += e.what()).c_str(), QMessageBox::Ok);
+
             return;
         }
         

@@ -10,12 +10,12 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
 
     #ifdef _WIN32
         if(WSAStartup(MAKEWORD(2, 0), &wsaData) !=0)
-        exit(1);
+            throw std::runtime_error("\nERROR: Windows failed (again).");
     #endif
 
     if((COMM_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: socket initialization failed.");
+
         error = true;
     }
 
@@ -27,64 +27,64 @@ Recording::Recording(std::string ip, std::string new_list_channels, std::string 
     server_address.sin_port = htons(com_port);
 
     if(connect(COMM_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: socket connection failed.");
+        
         error = true;
     }
 
     if ((EMG_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: EMG initialization failed.");
+
         error = true;
     }
 
     server_address.sin_port = htons(50041);
 
     if (connect(EMG_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: EMG connection failed.");
+
         error = true;
     }
 
     if ((ACC_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: ACC initialization failed.");
+
         error = true;
     }
 
     server_address.sin_port = htons(50042);
 
     if (connect(ACC_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: ACC connection failed.");
+
         error = true;
     }
 
     if ((IMEMG_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: IMEMG_sock initialization failed.");
+
         error = true;
     }
 
     server_address.sin_port = htons(50043);
 
     if (connect(IMEMG_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: IMEMG_sock connection failed.");
+
         error = true;
     }
 
     if ((AUX_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: AUX_sock initialization failed.");
+
         error = true;
     }
 
     server_address.sin_port = htons(50044);
 
     if (connect(AUX_sock, (struct sockaddr*)&server_address, sizeof(struct sockaddr_in)) == -1) {
-        throw std::exception();
-        //TODO write exception
+        throw std::runtime_error("\nERROR: AUX_sock connection failed.");
+
         error = true;
     }
 
@@ -248,7 +248,7 @@ void Recording::getData() {
             for(int k = 0; k < samples_IMEMG; k++)
                 chanels_IMEMG[k].resize(nb_channels_IMEMG);
 
-              if (recv(IMEMG_sock, IMEMG_data, SZ_DATA_IM_EMG, MSG_PEEK) >= SZ_DATA_IM_EMG) {
+            if (recv(IMEMG_sock, IMEMG_data, SZ_DATA_IM_EMG, MSG_PEEK) >= SZ_DATA_IM_EMG) {
                 recv(IMEMG_sock, IMEMG_data, SZ_DATA_IM_EMG, 0);
                 memcpy(IMEMG_data_flt, IMEMG_data, SZ_DATA_IM_EMG);
 
@@ -293,12 +293,6 @@ void Recording::getData() {
             if (lsl_sharing)
                 outlet_AUX->push_chunk(chanels_AUX);
         }
-
-        // #ifdef _WIN32
-        //     Sleep(100);
-        // #else
-        //     usleep(500000);
-        // #endif
     }
 }
 
@@ -307,9 +301,7 @@ void Recording::sendRequest(int socket, char *request) {
 
     if (send(socket, request, strlen(request), 0) == -1) {
         std::cout << "ERROR!" << std::endl;
-        throw std::exception();
-        error = true;
-        //TODO write exception
+        throw std::runtime_error("\nERROR: enable to send request.");
     }
 }
 
@@ -337,6 +329,11 @@ char* Recording::getReply(int socket) {
         recv(COMM_sock, tmp, bytesAvail, 0);
         tmp[bytesAvail] = '\0';
 
+        if(strcmp(tmp, "OK") == 0 || strcmp(tmp, "INVALID COMMAND") == 0) {
+            //TODO not working
+            throw std::runtime_error("\nERROR: socket exchange failed.");
+        }
+
         return tmp;
     }
 
@@ -360,21 +357,25 @@ void Recording::settingConfig(std::string new_list_channels, std::string new_lis
             case _EMG:
                 nb_channels_EMG = list_EMG.size();
                 sig_EMG = true;
+                info_EMG = new lsl::stream_info("Trigno Wireless EMG", "EMG",nb_channels_EMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
                 
                 break;
             case _ACC:
                 nb_channels_ACC = 3 * list_EMG.size();
                 sig_ACC = true;
+                info_ACC = new lsl::stream_info("Trigno Wireless ACC", "ACC", nb_channels_ACC, 148, lsl::cf_float32, boost::asio::ip::host_name());
                 
                 break;
             case _IMEMG:
                 nb_channels_IMEMG = list_EMG.size();
                 sig_IMEMG = true;
+                info_IMEMG = new lsl::stream_info("Trigno Wireless IMEMG", "IMEMG", nb_channels_IMEMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
 
                 break;
             case _AUX:
                 nb_channels_AUX = 9 * list_EMG.size();
                 sig_AUX = true;
+                info_AUX = new lsl::stream_info("Trigno Wireless AUX", "AUX", nb_channels_AUX, 2000, lsl::cf_float32, boost::asio::ip::host_name());
 
                 break;
             case _NONE:
@@ -384,10 +385,6 @@ void Recording::settingConfig(std::string new_list_channels, std::string new_lis
         }
     }
 
-    info_EMG = new lsl::stream_info("Trigno Wireless EMG", "EMG",nb_channels_EMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
-    info_ACC = new lsl::stream_info("Trigno Wireless ACC", "ACC", nb_channels_ACC, (int)256/2, lsl::cf_float32, boost::asio::ip::host_name());
-    info_IMEMG = new lsl::stream_info("Trigno Wireless IMEMG", "IMEMG", nb_channels_IMEMG, 2000, lsl::cf_float32, boost::asio::ip::host_name());
-    info_AUX = new lsl::stream_info("Trigno Wireless AUX", "AUX", nb_channels_AUX, 2000, lsl::cf_float32, boost::asio::ip::host_name());
     
     // lsl::xml_element l_channels_EMG = info_EMG->desc().append_child("list_channels");
     // lsl::xml_element l_channels_ACC = info_ACC->desc().append_child("list_channels");
