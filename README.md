@@ -5,8 +5,8 @@ TrignoWireless is a sublibrary for LSL. It provides all the information from the
 # Usage
 
 First launch Trigno Control Utility, wait until the software is connected to the box. Turn on all the EMGs you want to use.
-Now you can launch the TrignoWireless app and choose the channels you want to extract from the EMG. Then enter the ID for each EMG you want to record. 
-To finshed just click on "Connect" to link the application to the TrignoWireless software.
+Now you can launch the TrignoWireless app and choose the channels you want to extract from the EMG. Then enter the number of EMGs you want to record. 
+To finshed, click on "Connect" to link the application to the TrignoWireless software and after the "Disconnect" button appears, click on "link" to link to lsl.
 
 ## To launch the TrignoWireless App:
 ### Windows users
